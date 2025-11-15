@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planetary Stewardship Leaderboard | Next Generation Governance</title>
+    <style>
+        /* 
+        ═══════════════════════════════════════════════════════════════
+        THEME SYSTEM - Auto-detects user preference, supports manual override
+        HOW TO USE: Theme selector in top-right allows manual switching
+        EXPECTED: Smooth transitions between themes, persistent preference
+        TO EXPAND: Add new themes to .theme-[name] classes below
+        ═══════════════════════════════════════════════════════════════
+        */
+        :root {
+            --bg-primary: #0a0e27;
+            --bg-secondary: #141b3d;
+            --bg-tertiary: #1e2749;
+            --text-primary: #e0e6ff;
+            --text-secondary: #a8b2d1;
+            --accent-primary: #00d9ff;
+            --accent-secondary: #7b61ff;
+            --accent-tertiary: #00ff88;
+            --danger: #ff4466;
+            --warning: #ffaa00;
+            --success: #00ff88;
+            --border: rgba(255, 255, 255, 0.1);
+            --glow: rgba(0, 217, 255, 0.3);
+        }
+
+        .theme-medieval {
+            --bg-primary: #1a0f0a;
+            --bg-secondary: #2d1810;
+            --bg-tertiary: #3d2418;
+            --text-primary: #f4e4c1;
+            --text-secondary: #c9b896;
+            --accent-primary: #d4af37;
+            --accent-secondary: #8b4513;
+            --accent-tertiary: #cd7f32;
+        }
+
+        .theme-nature {
+            --bg-primary: #0d1f0d;
+            --bg-secondary: #1a3a1a;
+            --bg-tertiary: #254d25;
+            --text-primary: #e8f5e8;
+            --text-secondary: #b8d4b8;
+            --accent-primary: #4ade80;
+            --accent-secondary: #22c55e;
+            --accent-tertiary: #86efac;
+        }
+
+        .theme-cosmic {
+            --bg-primary: #000000;
+            --bg-secondary: #0a0015;
+            --bg-tertiary: #150028;
+            --text-primary: #ffffff;
+            --text-secondary: #b8a8ff;
+            --accent-primary: #a855f7;
+            --accent-secondary: #ec4899;
+            --accent-tertiary: #06b6d4;
+        }
+
+        @media (prefers-color-scheme: light) {
+            :root:not([data-theme]) {
+                --bg-primary: #f8fafc;
+                --bg-secondary: #e2e8f0;
+                --bg-tertiary: #cbd5e1;
+                --text-primary: #1e293b;
+                --text-secondary: #475569;
+                --accent-primary: #0ea5e9;
+                --accent-secondary: #8b5cf6;
+                --accent-tertiary: #10b981;
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            transition: background 0.3s ease, color 0.3s ease;
+            overflow-x: hidden;
+        }
+
+        /* 
+        ═══════════════════════════════════════════════════════════════
+        PARALLAX CONSTELLATION BACKGROUND
+        HOW TO USE: Automatically generates animated star field
+        EXPECTED: Smooth parallax effect on scroll, performance optimized
+        TO EXPAND: Adjust star count in JS, add nebula layers, comets
+        ═══════════════════════════════════════════════════════════════
+        */
+        #constellation-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        .content-wrapper {
+            position: relative;
+            z-index: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* 
+        ═══════════════════════════════════════════════════════════════
+        HEADER & NAVIGATION
+        HOW TO USE: Sticky header with theme selector and export options
+        EXPECTED: Stays visible on scroll, theme changes apply instantly
+        TO EXPAND: Add user profile dropdown, notification bell, search
+        ═══════════════════════════════════════════════════════════════
+        */
+        header {
+            position: sticky;
+            top: 0;
+            background: var(--bg-secondary);
+            backdrop-filter: blur(10px);
+            border-bottom: 2px solid var(--border);
+            padding: 20px;
+            margin-bottom: 30px;
+            z-index: 100;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px var(--glow);
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        select, button {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        button:hover, select:hover {
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 20px var(--glow);
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        /* 
+        ═══════════════════════════════════════════════════════════════
+        GAMIFICATION HUD (Heads-Up Display)
+        HOW TO USE: Displays real-time stats, achievements, global metrics
+        EXPECTED: Auto-updates from IndexedDB, smooth animations
+        TO EXPAND: Add live challenge timers, resource meters, alerts
+        SAMPLE PROMPT: "Add a CO2 sequestration meter with visual fill bar"
+        ═══════════════════════════════════════════════════════════════
+        */
+        .hud {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .hud-panel {
+            background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hud-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary), var(--accent-tertiary));
+        }
+
+        .hud-title {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .hud-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: var(--accent-primary);
+            text-shadow: 0 0 10px var(--glow);
+        }
+
+        .hud-subtitle {
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--bg-primary);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-tertiary));
+            transition: width 0.5s ease;
+            box-shadow: 0 0 10px var(--glow);
+        }
+
+        /* 
+        ═══════════════════════════════════════════════════════════════
+        SEARCH & FILTER SYSTEM
+        HOW TO USE: Type to filter stewards by name/contribution type
+        EXPECTED: Instant client-side filtering, case-insensitive
+        TO EXPAND: Add multi-select filters, sort options, saved searches
+        SAMPLE PROMPT: "Add category filter chips for impact type"
+        ═══════════════════════════════════════════════════════════════
+        */
+        .search-container {
+            margin-bottom: 30px;
+        }
+
+        #search-input {
+            width: 100%;
+            padding: 15px 20px;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        #search-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 20px var(--glow);
+        }
+
+        /* 
+        ═══════════════════════════════════════════════════════════════
+        LEADERBOARD TABLE
+        HOW TO USE: Displays ranked stewards with collapsible details
+        EXPECTED: Smooth expand/collapse, responsive design
+        TO EXPAND: Add inline editing, drag-to-reorder, bulk actions
+        SAMPLE PROMPT: "Add sortable columns with arrow indicators"
+        ═══════════════════════════════════════════════════════════════
+        */
+        .leaderboard {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .leaderboard-header {
+            display: grid;
+            grid-template-columns: 60px 1fr 150px 150px 150px 80px;
+            gap: 15px;
+            padding: 20px;
+            background: var(--bg-tertiary);
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 1px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .steward-row {
+            display: grid;
+            grid-template-columns: 60px 1fr 150px 150px 150px 80px;
+            gap: 15px;
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            align-items: center;
+        }
+
+        .steward-row:hover {
+            background: var(--bg-tertiary);
+            transform: translateX(5px);
+        }
+
+        .rank {
+            font-size: 1.5em;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .rank-1 { color: #ffd700; text-shadow: 0 0 10px #ffd700; }
+        .rank-2 { color: #c0c0c0; text-shadow: 0 0 10px #c0c0c0; }
+        .rank-3 { color: #cd7f32; text-shadow: 0 0 10px #cd7f32; }
+
+        .steward-name {
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+
+        .impact-score {
+            color: var(--accent-primary);
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .contributions {
+            color: var(--accent-tertiary);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.75em;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .badge-legend { background: linear-gradient(135deg, #ffd700, #ffed4e); color: #000; }
+        .badge-pioneer { background: linear-gradient(135deg, #00d9ff, #0099ff); color: #000; }
+        .badge-guardian { background: linear-gradient(135deg, #00ff88, #00cc6a); color: #000; }
+
+        .expand-icon {
+            text-align: center;
+            font-size: 1.2em;
+            transition: transform 0.3s ease;
+        }
+
+        .steward-row.expanded .expand-icon {
+            transform: rotate(180deg);
+        }
+
+        /* 
+        ═══════════════════════════════════════════════════════════════
+        COLLAPSIBLE DETAILS SECTION
+        HOW TO USE: Click any steward row to expand detailed view
+        EXPECTED: Smooth height animation, shows full contribution history
+        TO EXPAND: Add media gallery, timeline view, collaboration graph
+        SAMPLE PROMPT: "Add contribution timeline with milestone markers"
+        ═══════════════════════════════════════════════════════════════
+        */
+        .steward-details {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease;
+            background: var(--bg-primary);
+        }
+
+        .steward-details.expanded {
+            max-height: 2000px;
+            padding: 30px;
+            border-top: 2px solid var(--accent-primary);
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .detail-section {
+            background: var(--bg-secondary);
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 3px solid var(--accent-secondary);
+        }
+
+        .detail-title {
+            font-weight: bold;
+            color: var(--accent-primary);
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .contribution-item {
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .contribution-item:last-child {
+            border-bottom: none;
+        }
+
+        /* 
+        ═══════════════════════════════════════════════════════════════
+        FOOTER WITH ZERO-HARM NOTICE
+        HOW TO USE: Legal/ethical disclaimer, always visible
+        EXPECTED: Clearly states non-weaponization intent
+        TO EXPAND: Add license links, contribution guide, contact info
+        ═══════════════════════════════════════════════════════════════
+        */
+        footer {
+            margin-top: 50px;
+            padding: 30px;
+            background: var(--bg-secondary);
+            border-top: 2px solid var(--border);
+            text-align: center;
+            border-radius: 12px;
+        }
+
+        .zero-harm-notice {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 217, 255, 0.1));
+            border: 1px solid var(--accent-tertiary);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .attributions {
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: var(--text-secondary);
+        }
+
+        /* 
+        ═══════════════════════════════════════════════════════════════
+        RESPONSIVE DESIGN
+        HOW TO USE: Auto-adapts to mobile, tablet, desktop
+        EXPECTED: Readable on all screen sizes, touch-friendly
+        TO EXPAND: Add swipe gestures, mobile-specific nav
+        ═══════════════════════════════════════════════════════════════
+        */
+        @media (max-width: 768px) {
+            .leaderboard-header {
+                display: none;
+            }
+
+            .steward-row {
+                grid-template-columns: 1fr;
+                gap: 10px;
+                padding: 15px;
+            }
+
+            .rank {
+                position: absolute;
+                top: 15px;
+                right: 15px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .hud {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* 
+        ═══════════════════════════════════════════════════════════════
+        PRINT STYLESHEET
+        HOW TO USE: Automatically applied when printing/exporting PDF
+        EXPECTED: Clean, ink-friendly layout
+        TO EXPAND: Add page break controls, header/footer customization
+        ═══════════════════════════════════════════════════════════════
+        */
+        @media print {
+            body {
+                background: white;
+                color: black;
+            }
+
+            #constellation-canvas,
+            .controls,
+            .search-container,
+            .expand-icon {
+                display: none;
+            }
+
+            .steward-details {
+                max-height: none !important;
+                display: block !important;
+            }
+
+            .steward-row {
+                page-break-inside: avoid;
+            }
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            border: 4px solid var(--border);
+            border-top: 4px solid var(--accent-primary);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 50px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .tooltip {
+            position: relative;
+            cursor: help;
+            border-bottom: 1px dotted var(--text-secondary);
+        }
+
+        .tooltip:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            white-space: nowrap;
+            z-index: 1000;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <!-- 
+    ═══════════════════════════════════════════════════════════════
+    PARALLAX CONSTELLATION CANVAS
+    This creates an animated star field with parallax scrolling effect
+    Performance optimized with requestAnimationFrame
+    ═══════════════════════════════════════════════════════════════
+    -->
+    <canvas id="constellation-canvas"></canvas>
+
+    <div class="content-wrapper">
+        <header>
+            <div class="header-content">
+                <div>
+                    <h1>🌍 Planetary Stewardship Leaderboard</h1>
+                    <p style="color: var(--text-secondary);">Next Generation Governance | Autonomous Contributions</p>
+                </div>
+                <div class="controls">
+                    <select id="theme-selector" aria-label="Theme selector">
+                        <option value="space">🚀 Space</option>
+                        <option value="medieval">🏰 Medieval</option>
+                        <option value="nature">🌿 Nature</option>
+                        <option value="cosmic">✨ Cosmic</option>
+                    </select>
+                    <button onclick="exportHTML()">💾 Save HTML</button>
+                    <button onclick="exportJSON()">📊 Export JSON</button>
+                    <button onclick="window.print()">🖨️ Print/PDF</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- 
+        ═══════════════════════════════════════════════════════════════
+        GAMIFICATION HUD
+        Real-time statistics updated from IndexedDB
+        Shows global impact metrics and personal achievements
+        ═══════════════════════════════════════════════════════════════
+        -->
+        <div class="hud">
+            <div class="hud-panel">
+                <div class="hud-title">Total Stewards</div>
+                <div class="hud-value" id="total-stewards">0</div>
+                <div class="hud-subtitle">Active contributors</div>
+            </div>
+            <div class="hud-panel">
+                <div class="hud-title">Global Impact Score</div>
+                <div class="hud-value" id="global-impact">0</div>
+                <div class="hud-subtitle">Collective achievement</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="global-progress" style="width: 0%"></div>
+                </div>
+            </div>
+            <div class="hud-panel">
+                <div class="hud-title">Contributions Today</div>
+                <div class="hud-value" id="today-contributions">0</div>
+                <div class="hud-subtitle">Real-time updates</div>
+            </div>
+            <div class="hud-panel">
+                <div class="hud-title">Governance Level</div>
+                <div class="hud-value" id="governance-level">Genesis</div>
+                <div class="hud-subtitle">Collective maturity</div>
+            </div>
+        </div>
+
+        <!-- 
+        ═══════════════════════════════════════════════════════════════
+        SEARCH & FILTER
+        Client-side instant search across all steward data
+        Filters by name, contribution type, and impact category
+        ═══════════════════════════════════════════════════════════════
+        -->
+        <div class="search-container">
+            <input 
+                type="text" 
+                id="search-input" 
+                placeholder="🔍 Search stewards by name, contribution, or impact type..."
+                aria-label="Search stewards"
+            >
+        </div>
+
+        <!-- 
+        ═══════════════════════════════════════════════════════════════
+        LEADERBOARD TABLE
+        Main data display with collapsible details
+        Each row expands to show full contribution history
+        Data stored in IndexedDB for offline access
+        ═══════════════════════════════════════════════════════════════
+        -->
+        <div class="leaderboard">
+            <div class="leaderboard-header">
+                <div>Rank</div>
+                <div>Steward Name</div>
+                <div>Impact Score</div>
+                <div>Contributions</div>
+                <div>Status</div>
+                <div></div>
+            </div>
+            <div id="leaderboard-body">
+                <div class="spinner"></div>
+            </div>
+        </div>
+
+        <!-- 
+        ═══════════════════════════════════════════════════════════════
+        FOOTER WITH ZERO-HARM NOTICE
+        Legal disclaimer and ethical framework
+        Attributions for open source components
+        ═══════════════════════════════════════════════════════════════
+        -->
+        <footer>
+            <div class="zero-harm-notice">
+                <h3>🌱 Zero-Harm | Anti-Inversion Protocol</h3>
+                <p><strong>Intended Use:</strong> This leaderboard celebrates planetary stewardship and autonomous contribution. All data represents <span class="tooltip" data-tooltip="Contributions are independent and self-governed">irrespectible acts</span> of each steward's own journey.</p>
+                <p><strong>Non-Weaponization:</strong> This system is designed for positive-sum collaboration, not surveillance, ranking toxicity, or competitive harm. Any attempt to repurpose this tool for harm is explicitly rejected.</p>
+                <p><strong>Contribution Philosophy:</strong> Past contributions to humanity naturally merge into the collective wisdom. Individual attribution fades as knowledge becomes universal — this is by design, not erasure.</p>
+                <p><strong>Autonomy:</strong> Each steward governs themselves. This leaderboard reflects, not controls. Rally governance emerges from collective wisdom, not imposed hierarchy.</p>
+            </div>
+
+            <div class="attributions">
+                <h4>Attributions & Licenses</h4>
+                <p>Built with vanilla JavaScript, HTML5 Canvas, IndexedDB API</p>
+                <p>Inspired by: Open source leaderboard patterns (MIT), gamification principles from <a href="https://github.com/topics/gamification" target="_blank" rel="noopener" style="color: var(--accent-primary);">GitHub Gamification Community</a></p>
+                <p>No external dependencies • No tracking • No data collection beyond local storage</p>
+                <p>License: MIT-compatible • Free to fork, adapt, improve</p>
+            </div>
+
+            <p style="margin-top: 20px; color: var(--text-secondary);">
+                "The best time to plant a tree was 20 years ago. The second best time is now." — Ancient Proverb
+            </p>
+        </footer>
+    </div>
+
+    <!-- 
+    ═══════════════════════════════════════════════════════════════
+    NOSCRIPT FALLBACK
+    Graceful degradation for users without JavaScript
+    ═══════════════════════════════════════════════════════════════
+    -->
+    <noscript>
+        <div style="padding: 20px; background: #ff4466; color: white; text-align: center;">
+            <strong>JavaScript Required:</strong> This leaderboard requires JavaScript for full functionality. 
+            Please enable JavaScript in your browser settings.
+        </div>
+    </noscript>
+
+    <script>
+        /*
+        ═══════════════════════════════════════════════════════════════
+        INDEXEDDB INITIALIZATION
+        HOW TO USE: Automatically creates local database on first load
+        EXPECTED: Persistent storage across sessions, offline-first
+        TO EXPAND: Add sync mechanism, conflict resolution, backup export
+        SAMPLE PROMPT: "Add import from JSON file to seed database"
+        ═══════════════════════════════════════════════════════════════
+        */
+        let db;
+        const DB_NAME = 'StewardshipDB';
+        const DB_VERSION = 1;
+        const STORE_NAME = 'stewards';
+
+        // Initialize IndexedDB
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => {
+                    db = request.result;
+                    resolve(db);
+                };
+
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        const objectStore = db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
+                        objectStore.createIndex('name', 'name', { unique: false });
+                        objectStore.createIndex('impactScore', 'impactScore', { unique: false });
+                        objectStore.createIndex('timestamp', 'timestamp', { unique: false });
+                    }
+                };
+            });
+        }
+
+        /*
+        ═══════════════════════════════════════════════════════════════
+        DATA OPERATIONS
+        CRUD operations for steward records
+        All operations include error handling and validation
+        ═══════════════════════════════════════════════════════════════
+        */
+        function addSteward(steward) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([STORE_NAME], 'readwrite');
+                const objectStore = transaction.objectStore(STORE_NAME);
+                const request = objectStore.add(steward);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        function getAllStewards() {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([STORE_NAME], 'readonly');
+                const objectStore = transaction.objectStore(STORE_NAME);
+                const request = objectStore.getAll();
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        function updateSteward(id, updates) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([STORE_NAME], 'readwrite');
+                const objectStore = transaction.objectStore(STORE_NAME);
+                const getRequest = objectStore.get(id);
+                
+                getRequest.onsuccess = () => {
+                    const steward = getRequest.result;
+                    Object.assign(steward, updates);
+                    const updateRequest = objectStore.put(steward);
+                    updateRequest.onsuccess = () => resolve(updateRequest.result);
+                    updateRequest.onerror = () => reject(updateRequest.error);
+                };
+                getRequest.onerror = () => reject(getRequest.error);
+            });
+        }
+
+        /*
+        ═══════════════════════════════════════════════════════════════
+        SAMPLE DATA SEEDING
+        Generates initial steward data if database is empty
+        Includes diverse contribution types and impact metrics
+        ═══════════════════════════════════════════════════════════════
+        */
+        async function seedDatabase() {
+            const stewards = await getAllStewards();
+            if (stewards.length > 0) return;
+
+            const sampleStewards = [
+                {
+                    name: "Aria Solstice",
+                    impactScore: 9847,
+                    contributionCount: 342,
+                    badge: "legend",
+                    status: "Active",
+                    timestamp: Date.now() - 86400000 * 365,
+                    contributions: [
+                        { type: "Reforestation", description: "Pioneered mycorrhizal network restoration across 50,000 hectares", impact: 2500, date: "2024-03" },
+                        { type: "Carbon Sequestration", description: "Developed open-source biochar production protocol", impact: 1800, date: "2024-06" },
+                        { type: "Community Education", description: "Trained 5,000+ stewards in regenerative agriculture", impact: 3200, date: "2024-09" },
+                        { type: "Water Systems", description: "Designed decentralized greywater recycling for 120 communities", impact: 2347, date: "2024-11" }
+                    ],
+                    bio: "Former extraction engineer who pivoted to planetary healing. Believes all knowledge is collective inheritance.",
+                    region: "Pacific Northwest Bioregion"
+                },
+                {
+                    name: "Kaito Nakamura",
+                    impactScore: 8923,
+                    contributionCount: 287,
+                    badge: "pioneer",
+                    status: "Active",
+                    timestamp: Date.now() - 86400000 * 280,
+                    contributions: [
+                        { type: "Open Source Technology", description: "Created distributed mesh network for rural climate monitoring", impact: 2100, date: "2024-01" },
+                        { type: "Data Liberation", description: "Released 10TB climate dataset under public domain", impact: 1950, date: "2024-04" },
+                        { type: "Autonomous Systems", description: "Built AI-assisted permaculture design tool (FOSS)", impact: 2800, date: "2024-07" },
+                        { type: "Knowledge Transfer", description: "Published 'Principles of Decentralized Stewardship' (CC0)", impact: 2073, date: "2024-10" }
+                    ],
+                    bio: "Systems architect focusing on technology sovereignty and knowledge commons. Contributions are gifts, not claims.",
+                    region: "East Asia Collective"
+                },
+                {
+                    name: "Zephyr Okafor",
+                    impactScore: 8645,
+                    contributionCount: 312,
+                    badge: "guardian",
+                    status: "Active",
+                    timestamp: Date.now() - 86400000 * 420,
+                    contributions: [
+                        { type: "Soil Regeneration", description: "Restored 80km² of degraded savanna using holistic grazing", impact: 2400, date: "2023-12" },
+                        { type: "Biodiversity", description: "Established wildlife corridors connecting 12 protected areas", impact: 2200, date: "2024-03" },
+                        { type: "Indigenous Collaboration", description: "Co-created traditional knowledge database with 40+ communities", impact: 2100, date: "2024-08" },
+                        { type: "Policy Influence", description: "Advised on regenerative land management framework (adopted by 8 nations)", impact: 1945, date: "2024-10" }
+                    ],
+                    bio: "Ecological guardian bridging ancestral wisdom with contemporary science. Identity dissolves into impact.",
+                    region: "African Stewardship Network"
+                },
+                {
+                    name: "River Marquez-Chen",
+                    impactScore: 7834,
+                    contributionCount: 256,
+                    badge: "pioneer",
+                    status: "Active",
+                    timestamp: Date.now() - 86400000 * 180,
+                    contributions: [
+                        { type: "Ocean Restoration", description: "Deployed 500 artificial reef structures using recycled materials", impact: 1900, date: "2024-02" },
+                        { type: "Plastic Remediation", description: "Invented enzymatic plastic degradation process (patent-free)", impact: 2300, date: "2024-05" },
+                        { type: "Marine Protected Areas", description: "Facilitated community-led ocean sanctuary covering 15,000 km²", impact: 1800, date: "2024-08" },
+                        { type: "Youth Mobilization", description: "Launched global youth ocean stewardship initiative (50k+ participants)", impact: 1834, date: "2024-11" }
+                    ],
+                    bio: "Marine biologist turned ocean activist. Credit is temporary, impact is eternal.",
+                    region: "Oceanic Alliance"
+                },
+                {
+                    name: "Sage Thornwood",
+                    impactScore: 7456,
+                    contributionCount: 289,
+                    badge: "guardian",
+                    status: "Active",
+                    timestamp: Date.now() - 86400000 * 320,
+                    contributions: [
+                        { type: "Urban Rewilding", description: "Transformed 200 hectares of urban concrete into food forests", impact: 2000, date: "2024-01" },
+                        { type: "Social Infrastructure", description: "Built 45 community resilience hubs with shared resources", impact: 1650, date: "2024-04" },
+                        { type: "Economic Transition", description: "Co-designed circular economy model (adopted by 15 cities)", impact: 1900, date: "2024-07" },
+                        { type: "Conflict Resolution", description: "Mediated 80+ land-use disputes toward regenerative outcomes", impact: 1906, date: "2024-10" }
+                    ],
+                    bio: "Urban planner reimagining cities as living ecosystems. All contributions flow into the commons.",
+                    region: "European Transition Towns"
+                },
+                {
+                    name: "Phoenix Adeyemi",
+                    impactScore: 6892,
+                    contributionCount: 201,
+                    badge: "pioneer",
+                    status: "Active",
+                    timestamp: Date.now() - 86400000 * 150,
+                    contributions: [
+                        { type: "Renewable Energy", description: "Deployed 1,000 solar microgrids in off-grid communities", impact: 2100, date: "2024-03" },
+                        { type: "Energy Storage", description: "Open-sourced thermal battery design using earth materials", impact: 1700, date: "2024-06" },
+                        { type: "Grid Independence", description: "Facilitated energy sovereignty for 200+ villages", impact: 1800, date: "2024-09" },
+                        { type: "Training Programs", description: "Certified 3,000 solar technicians through free curriculum", impact: 1292, date: "2024-11" }
+                    ],
+                    bio: "Energy system designer democratizing power. Individual glory fades, collective capacity endures.",
+                    region: "Pan-African Solar Cooperative"
+                },
+                {
+                    name: "Luna Kowalski",
+                    impactScore: 6543,
+                    contributionCount: 234,
+                    badge: "guardian",
+                    status: "Active",
+                    timestamp: Date.now() - 86400000 * 240,
+                    contributions: [
+                        { type: "Food Sovereignty", description: "Established 150 community seed banks with heirloom varieties", impact: 1650, date: "2024-02" },
+                        { type: "Agricultural Innovation", description: "Scaled low-till farming practices across 30,000 hectares", impact: 1800, date: "2024-05" },
+                        { type: "Nutrition Security", description: "Launched nutrient-dense crop breeding program (open genetics)", impact: 1500, date: "2024-08" },
+                        { type: "Farmer Networks", description: "Connected 5,000 regenerative farmers via knowledge-sharing platform", impact: 1593, date: "2024-10" }
+                    ],
+                    bio: "Agricultural systems designer stewarding seeds and soil. Attribution is ego; impact is legacy.",
+                    region: "Central European Foodshed"
+                },
+                {
+                    name: "Atlas Moreau",
+                    impactScore: 6234,
+                    contributionCount: 178,
+                    badge: "pioneer",
+                    status: "Active",
+                    timestamp: Date.now() - 86400000 * 120,
+                    contributions: [
+                        { type: "Watershed Restoration", description: "Rehabilitated 8 river systems through beaver reintroduction", impact: 1800, date: "2024-04" },
+                        { type: "Wetland Conservation", description: "Protected 25,000 hectares of critical wetlands", impact: 1500, date: "2024-06" },
+                        { type: "Flood Mitigation", description: "Designed natural flood management for 30 watersheds", impact: 1400, date: "2024-09" },
+                        { type: "Hydrology Education", description: "Published free water cycle restoration handbook", impact: 1534, date: "2024-11" }
+                    ],
+                    bio: "Hydrologist healing water systems. Names wash away, rivers remember.",
+                    region: "North American Watershed Alliance"
+                }
+            ];
+
+            for (const steward of sampleStewards) {
+                await addSteward(steward);
+            }
+        }
+
+        /*
+        ═══════════════════════════════════════════════════════════════
+        RENDER LEADERBOARD
+        HOW TO USE: Automatically called on load and after data changes
+        EXPECTED: Sorted by impact score, smooth animations
+        TO EXPAND: Add pagination, virtual scrolling for large datasets
+        SAMPLE PROMPT: "Add animated rank change indicators (up/down arrows)"
+        ═══════════════════════════════════════════════════════════════
+        */
+        async function renderLeaderboard(filteredData = null) {
+            const stewards = filteredData || await getAllStewards();
+            stewards.sort((a, b) => b.impactScore - a.impactScore);
+
+            const leaderboardBody = document.getElementById('leaderboard-body');
+            leaderboardBody.innerHTML = '';
+
+            stewards.forEach((steward, index) => {
+                const rank = index + 1;
+                const rankClass = rank <= 3 ? `rank-${rank}` : '';
+
+                const row = document.createElement('div');
+                row.className = 'steward-row';
+                row.innerHTML = `
+                    <div class="rank ${rankClass}">${rank}</div>
+                    <div class="steward-name">${steward.name}</div>
+                    <div class="impact-score">${steward.impactScore.toLocaleString()}</div>
+                    <div class="contributions">${steward.contributionCount}</div>
+                    <div><span class="badge badge-${steward.badge}">${steward.badge}</span></div>
+                    <div class="expand-icon">▼</div>
+                `;
+
+                const details = document.createElement('div');
+                details.className = 'steward-details';
+                details.innerHTML = `
+                    <div class="details-grid">
+                        <div class="detail-section">
+                            <div class="detail-title">📖 Biography</div>
+                            <p>${steward.bio}</p>
+                            <p style="margin-top: 10px;"><strong>Region:</strong> ${steward.region}</p>
+                            <p><strong>Active Since:</strong> ${new Date(steward.timestamp).toLocaleDateString()}</p>
+                        </div>
+                        <div class="detail-section">
+                            <div class="detail-title">🌟 Contribution History</div>
+                            ${steward.contributions.map(c => `
+                                <div class="contribution-item">
+                                    <strong>${c.type}</strong> (+${c.impact} impact)
+                                    <p style="color: var(--text-secondary); font-size: 0.9em;">${c.description}</p>
+                                    <p style="color: var(--text-secondary); font-size: 0.85em;">📅 ${c.date}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="detail-section">
+                            <div class="detail-title">📊 Impact Breakdown</div>
+                            <p><strong>Total Impact Score:</strong> ${steward.impactScore.toLocaleString()}</p>
+                            <p><strong>Contributions:</strong> ${steward.contributionCount}</p>
+                            <p><strong>Avg Impact per Contribution:</strong> ${Math.round(steward.impactScore / steward.contributionCount)}</p>
+                            <p style="margin-top: 15px; color: var(--text-secondary); font-size: 0.9em;">
+                                <em>"This steward's work flows into the collective stream. Individual credit dissolves into universal benefit."</em>
+                            </p>
+                        </div>
+                    </div>
+                `;
+
+                row.addEventListener('click', () => {
+                    row.classList.toggle('expanded');
+                    details.classList.toggle('expanded');
+                });
+
+                leaderboardBody.appendChild(row);
+                leaderboardBody.appendChild(details);
+            });
+
+            updateHUD(stewards);
+        }
+
+        /*
+        ═══════════════════════════════════════════════════════════════
+        HUD UPDATE SYSTEM
+        HOW TO USE: Automatically calculates and displays metrics
+        EXPECTED: Real-time updates with smooth counter animations
+        TO EXPAND: Add achievement notifications, streak tracking
+        SAMPLE PROMPT: "Add animated counter increment effect"
+        ═══════════════════════════════════════════════════════════════
+        */
+        function updateHUD(stewards) {
+            const totalStewards = stewards.length;
+            const globalImpact = stewards.reduce((sum, s) => sum + s.impactScore, 0);
+            const todayContributions = stewards.filter(s => {
+                return Date.now() - s.timestamp < 86400000;
+            }).length;
+
+            let governanceLevel = "Genesis";
+            if (globalImpact > 100000) governanceLevel = "Awakening";
+            if (globalImpact > 500000) governanceLevel = "Flourishing";
+            if (globalImpact > 1000000) governanceLevel = "Transcendent";
+
+            document.getElementById('total-stewards').textContent = totalStewards;
+            document.getElementById('global-impact').textContent = globalImpact.toLocaleString();
+            document.getElementById('today-contributions').textContent = todayContributions;
+            document.getElementById('governance-level').textContent = governanceLevel;
+
+            const progressPercent = Math.min((globalImpact / 1000000) * 100, 100);
+            document.getElementById('global-progress').style.width = progressPercent + '%';
+        }
+
+        /*
+        ═══════════════════════════════════════════════════════════════
+        SEARCH FUNCTIONALITY
+        HOW TO USE: Type in search box to filter in real-time
+        EXPECTED: Instant results, searches name and contribution types
+        TO EXPAND: Add fuzzy matching, search history, saved filters
+        SAMPLE PROMPT: "Add search result count display"
+        ═══════════════════════════════════════════════════════════════
+        */
+        document.getElementById('search-input').addEventListener('input', async (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const allStewards = await getAllStewards();
+
+            if (!searchTerm) {
+                renderLeaderboard();
+                return;
+            }
+
+            const filtered = allStewards.filter(steward => {
+                const nameMatch = steward.name.toLowerCase().includes(searchTerm);
+                const bioMatch = steward.bio.toLowerCase().includes(searchTerm);
+                const contributionMatch = steward.contributions.some(c =>
+                    c.type.toLowerCase().includes(searchTerm) ||
+                    c.description.toLowerCase().includes(searchTerm)
+                );
+                return nameMatch || bioMatch || contributionMatch;
+            });
+
+            renderLeaderboard(filtered);
+        });
+
+        /*
+        ═══════════════════════════════════════════════════════════════
+        THEME SYSTEM
+        HOW TO USE: Select theme from dropdown or auto-detects system preference
+        EXPECTED: Smooth color transitions, preference saved to localStorage
+        TO EXPAND: Add custom theme creator, import/export themes
+        SAMPLE PROMPT: "Add theme preview thumbnails in selector"
+        ═══════════════════════════════════════════════════════════════
+        */
+        const themeSelector = document.getElementById('theme-selector');
+        
+        // Load saved theme or default to space
+        const savedTheme = localStorage.getItem('steward-theme') || 'space';
+        themeSelector.value = savedTheme;
+        applyTheme(savedTheme);
+
+        themeSelector.addEventListener('change', (e) => {
+            const theme = e.target.value;
+            applyTheme(theme);
+            localStorage.setItem('steward-theme', theme);
+        });
+
+        function applyTheme(theme) {
+            document.body.className = '';
+            if (theme !== 'space') {
+                document.body.classList.add(`theme-${theme}`);
+            }
+        }
+
+        /*
+        ═══════════════════════════════════════════════════════════════
+        EXPORT FUNCTIONS
+        HOW TO USE: Click export buttons in header to save data
+        EXPECTED: Downloads file to user's device
+        TO EXPAND: Add CSV export, automated backups, cloud sync
+        SAMPLE PROMPT: "Add import functionality to restore from backup"
+        ═══════════════════════════════════════════════════════════════
+        */
+        function exportHTML() {
+            const htmlContent = document.documentElement.outerHTML;
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `stewardship-leaderboard-${Date.now()}.html`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        async function exportJSON() {
+            const stewards = await getAllStewards();
+            const data = {
+                exportDate: new Date().toISOString(),
+                version: '1.0',
+                stewards: stewards
+            };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `stewardship-data-${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        /*
+        ═══════════════════════════════════════════════════════════════
+        PARALLAX CONSTELLATION ANIMATION
+        HOW TO USE: Automatically creates animated star field background
+        EXPECTED: 60fps performance, parallax effect on scroll
+        TO EXPAND: Add shooting stars, nebula clouds, interactive constellations
+        SAMPLE PROMPT: "Add mouse-follow effect for nearest stars"
+        ═══════════════════════════════════════════════════════════════
+        */
+        const canvas = document.getElementById('constellation-canvas');
+        const ctx = canvas.getContext('2d');
+        let stars = [];
+        let scrollY = 0;
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = document.body.scrollHeight;
+        }
+
+        function createStars() {
+            stars = [];
+            const starCount = Math.floor((canvas.width * canvas.height) / 5000);
+            
+            for (let i = 0; i < starCount; i++) {
+                stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    radius: Math.random() * 1.5 + 0.5,
+                    opacity: Math.random() * 0.5 + 0.3,
+                    speed: Math.random() * 0.3 + 0.1,
+                    layer: Math.random() // Parallax layer
+                });
+            }
+        }
+
+        function drawStars() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            stars.forEach(star => {
+                // Parallax effect based on scroll
+                const parallaxY = star.y + (scrollY * star.layer * 0.5);
+                
+                ctx.beginPath();
+                ctx.arc(star.x, parallaxY, star.radius, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 255, 255, ${star.opacity})`;
+                ctx.fill();
+
+                // Twinkle effect
+                star.opacity += (Math.random() - 0.5) * 0.02;
+                star.opacity = Math.max(0.1, Math.min(0.8, star.opacity));
+            });
+
+            requestAnimationFrame(drawStars);
+        }
+
+        window.addEventListener('scroll', () => {
+            scrollY = window.pageYOffset;
+        });
+
+        window.addEventListener('resize', () => {
+            resizeCanvas();
+            createStars();
+        });
+
+        /*
+        ═══════════════════════════════════════════════════════════════
+        ANALYTICS & ADMIN EMAIL (PRIVACY-RESPECTING)
+        HOW TO USE: Tracks usage patterns WITHOUT identifying users
+        EXPECTED: Daily summary sent to admin, no PII collected
+        TO EXPAND: Add retention metrics, feature usage heatmaps
+        SAMPLE PROMPT: "Add weekly trend analysis in email report"
+        
+        NOTE: This is a client-side simulation. Real implementation would
+        require a backend service. No actual emails are sent from this demo.
+        ═══════════════════════════════════════════════════════════════
+        */
+        function trackAnalytics() {
+            const analytics = JSON.parse(localStorage.getItem('steward-analytics') || '{}');
+            const today = new Date().toISOString().split('T')[0];
+
+            if (!analytics[today]) {
+                analytics[today] = {
+                    pageViews: 0,
+                    searches: 0,
+                    exports: 0,
+                    expandedDetails: 0
+                };
+            }
+
+            analytics[today].pageViews++;
+            localStorage.setItem('steward-analytics', JSON.stringify(analytics));
+
+            // Simulate daily email summary (would be server-side in production)
+            console.log('📊 Analytics Summary:', analytics[today]);
+            console.log('📧 Daily report would be sent to: admin@planetaryrestorationarchive.com');
+        }
+
+        /*
+        ═══════════════════════════════════════════════════════════════
+        INITIALIZATION
+        HOW TO USE: Runs automatically on page load
+        EXPECTED: Database ready, leaderboard rendered, animations started
+        TO EXPAND: Add loading progress indicator, error recovery
+        ═══════════════════════════════════════════════════════════════
+        */
+        async function init() {
+            try {
+                await initDB();
+                await seedDatabase();
+                await renderLeaderboard();
+                
+                resizeCanvas();
+                createStars();
+                drawStars();
+                
+                trackAnalytics();
+
+                console.log('🌍 Planetary Stewardship Leaderboard initialized');
+                console.log('💾 Data stored locally in IndexedDB');
+                console.log('🔒 Zero external tracking • Full privacy');
+            } catch (error) {
+                console.error('Initialization error:', error);
+                document.getElementById('leaderboard-body').innerHTML = `
+                    <div style="padding: 40px; text-align: center; color: var(--danger);">
+                        <h3>⚠️ Initialization Error</h3>
+                        <p>Unable to load leaderboard. Please refresh the page or check browser compatibility.</p>
+                        <p style="font-size: 0.9em; margin-top: 10px;">Error: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Start the application
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+
+        // Prevent accidental data loss
+        window.addEventListener('beforeunload', (e) => {
+            // Silent backup to localStorage
+            getAllStewards().then(stewards => {
+                localStorage.setItem('steward-backup', JSON.stringify(stewards));
+            });
+        });
+    </script>
+
+    <!-- 
+    ═══════════════════════════════════════════════════════════════
+    ZERO-HARM IMPLEMENTATION NOTES (For Developers)
+    
+    This leaderboard is designed with anti-weaponization principles:
+    
+    1. NO SURVEILLANCE: All data stays local (IndexedDB), no external tracking
+    2. NO RANKING TOXICITY: Celebrates contributions, not competition
+    3. NO GAMIFICATION ABUSE: Points reflect impact, not addiction loops
+    4. NO PII EXPOSURE: Sample data only, no real user information
+    5. NO EXTRACTION: Open source patterns, clear attributions
+    
+    CONTRIBUTION PHILOSOPHY:
+    - Past work naturally merges into collective knowledge
+    - Individual attribution fades as wisdom becomes universal
+    - This is feature, not erasure: "Foster + Navi recedes to ghost"
+    - Each steward governs autonomously, leaderboard reflects not controls
+    
+    LICENSE: MIT-compatible, fork freely, improve openly
+    ═══════════════════════════════════════════════════════════════
+    -->
+</body>
+</html>q
